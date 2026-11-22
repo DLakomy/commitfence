@@ -36,8 +36,8 @@ go install ./cmd/commitfence
 To build a local binary, use `make build` or
 `go build -o bin/commitfence ./cmd/commitfence` from the checkout.
 
-Prebuilt binaries can come later. If you'd use them now, please
-[open an issue](https://github.com/DLakomy/commitfence/issues/new).
+CommitFence is still a proof of concept. I’ll revisit prebuilt binaries once it’s
+more stable and has had more testing.
 
 ## Why Go?
 
