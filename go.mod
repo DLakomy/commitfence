@@ -1,4 +1,4 @@
-module commitfence
+module github.com/DLakomy/commitfence
 
 go 1.27.0
 

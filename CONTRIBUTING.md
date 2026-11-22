@@ -6,8 +6,8 @@ and current limitations.
 
 ## Local setup
 
-Install Git, Make, and Go 1.27.3, the toolchain selected by `go.mod`. Clone the
-repository and run commands from its root:
+Install Git, Make, and Go. See [go.mod](go.mod) for the minimum Go version and
+preferred toolchain. Clone the repository and run commands from its root:
 
 ```sh
 go mod download

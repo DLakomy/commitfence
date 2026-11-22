@@ -5,7 +5,7 @@ import (
 	"syscall"
 	"testing"
 
-	"commitfence/internal/analysis"
+	"github.com/DLakomy/commitfence/internal/analysis"
 )
 
 func TestCheckNonregularExternalsFile(t *testing.T) {

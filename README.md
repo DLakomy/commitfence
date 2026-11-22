@@ -16,7 +16,16 @@ through PL/SQL calls? Vide [Introducing Eezo](https://rockthejvm.com/articles/in
 
 ## Install
 
-With Go 1.27.3, clone the repo and install from the checkout.
+Use `go install` to install CommitFence. See [go.mod](go.mod) for the minimum Go
+version and preferred toolchain.
+
+```sh
+go install github.com/DLakomy/commitfence/cmd/commitfence@latest
+```
+
+With Go's bin directory on your `PATH`, run `commitfence check path/to/src`.
+
+To install from a checkout, run:
 
 ```sh
 git clone https://github.com/DLakomy/commitfence.git
@@ -24,9 +33,8 @@ cd commitfence
 go install ./cmd/commitfence
 ```
 
-With Go's bin directory on your `PATH`, run `commitfence check path/to/src`.
-To build a local binary, use `go build -o bin/commitfence ./cmd/commitfence`
-or `make build`.
+To build a local binary, use `make build` or
+`go build -o bin/commitfence ./cmd/commitfence` from the checkout.
 
 Prebuilt binaries can come later. If you'd use them now, please
 [open an issue](https://github.com/DLakomy/commitfence/issues/new).

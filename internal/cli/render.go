@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/term"
 
-	"commitfence/internal/analysis"
+	"github.com/DLakomy/commitfence/internal/analysis"
 )
 
 type renderer struct {

@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"commitfence/internal/analysis"
+	"github.com/DLakomy/commitfence/internal/analysis"
 )
 
 type checkConfig struct {

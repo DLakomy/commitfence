@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"commitfence/internal/analysis"
+	"github.com/DLakomy/commitfence/internal/analysis"
 )
 
 // These report combinations drive the CLI's clean, warning, and error statuses.

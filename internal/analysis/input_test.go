@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"commitfence/internal/analysis"
+	"github.com/DLakomy/commitfence/internal/analysis"
 )
 
 func TestCheckDirectoryExtensions(t *testing.T) {

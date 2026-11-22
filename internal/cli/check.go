@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"commitfence/internal/analysis"
+	"github.com/DLakomy/commitfence/internal/analysis"
 )
 
 func newCheckCommand(stderr io.Writer, code *int) *cobra.Command {
