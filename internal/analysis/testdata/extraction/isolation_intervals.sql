@@ -1,0 +1,24 @@
+CREATE OR REPLACE PROCEDURE app.host IS
+  PROCEDURE first_auto IS
+    PRAGMA AUTONOMOUS_TRANSACTION;
+    PROCEDURE inner_auto IS
+      PRAGMA AUTONOMOUS_TRANSACTION;
+    BEGIN
+      COMMIT;
+    END inner_auto;
+    PROCEDURE ordinary IS
+    BEGIN
+      ROLLBACK;
+    END ordinary;
+  BEGIN
+    COMMIT;
+  END first_auto;
+  PROCEDURE second_auto IS
+    PRAGMA AUTONOMOUS_TRANSACTION;
+  BEGIN
+    ROLLBACK;
+  END second_auto;
+BEGIN
+  COMMIT;
+END host;
+/

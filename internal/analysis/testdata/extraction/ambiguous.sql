@@ -1,0 +1,7 @@
+CREATE OR REPLACE PROCEDURE app.bad_header
+CREATE OR REPLACE PROCEDURE app.good IS
+BEGIN
+  COMMIT;
+END good;
+END good;
+/

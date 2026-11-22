@@ -1,0 +1,1 @@
+-- Source loading fixture; semantic analysis is not implemented yet.

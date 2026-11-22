@@ -1,0 +1,58 @@
+=== commitfence
+Check local PL/SQL transaction behavior
+
+Usage:
+  commitfence [flags]
+  commitfence [command]
+
+Available Commands:
+  check       Analyze source files and directories
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+
+Flags:
+  -h, --help   help for commitfence
+
+Use "commitfence [command] --help" for more information about a command.
+=== commitfence check
+Analyze source files and directories for PL/SQL transaction behavior.
+Load .commitfence.json from the current directory, or select a file with --config.
+Without source paths, use configured paths or the current directory.
+Flags may precede or follow source paths. Use -- before paths beginning with -.
+
+Usage:
+  commitfence check [PATH...] [flags]
+
+Flags:
+      --color string         diagnostic colors: auto, always, or never (default "auto")
+      --config string        version-1 JSON application config file (default ".commitfence.json")
+      --extensions strings   file extensions selected in directory scans (default [sql,pks,pkb,pls,tps,tpb])
+      --externals string     version-1 JSON file for external transaction declarations (empty disables declarations)
+  -h, --help                 help for check
+      --path-style string    reported paths: relative or absolute (default "relative")
+=== commitfence completion
+Generate the autocompletion script for commitfence for the specified shell.
+See each sub-command's help for details on how to use the generated script.
+
+Usage:
+  commitfence completion [command]
+
+Available Commands:
+  bash        Generate the autocompletion script for bash
+  fish        Generate the autocompletion script for fish
+  powershell  Generate the autocompletion script for powershell
+  zsh         Generate the autocompletion script for zsh
+
+Flags:
+  -h, --help   help for completion
+
+Use "commitfence completion [command] --help" for more information about a command.
+=== commitfence help
+Help provides help for any command in the application.
+Simply type commitfence help [path to command] for full details.
+
+Usage:
+  commitfence help [command] [flags]
+
+Flags:
+  -h, --help   help for help

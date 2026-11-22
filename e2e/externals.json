@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "routines": [
+    {
+      "name": "EXT.CUSTOMER_API.FIND_CUSTOMER",
+      "transaction": "safe"
+    },
+    {
+      "name": "EXT.CUSTOMER_API.FLUSH_BATCH",
+      "transaction": "unsafe"
+    }
+  ]
+}

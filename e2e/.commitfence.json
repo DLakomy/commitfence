@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "paths": ["src"],
+  "extensions": ["pks", "pkb"],
+  "externals": "externals.json",
+  "path_style": "relative",
+  "color": "never"
+}

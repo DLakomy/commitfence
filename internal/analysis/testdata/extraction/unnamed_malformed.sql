@@ -1,0 +1,25 @@
+CREATE PROCEDURE app.missing_end IS BEGIN COMMIT;
+/
+PROCEDURE app.after_slash IS BEGIN ROLLBACK; END;
+/
+CREATE PROCEDURE app.wrong_end IS BEGIN COMMIT; END another;
+CREATE PROCEDURE app.wrong_control IS
+BEGIN
+  IF 1 = 1 THEN NULL; END LOOP;
+END;
+/
+CREATE PROCEDURE app.ambiguous_owner IS
+  PROCEDURE ambiguous_owner IS BEGIN NULL;
+BEGIN NULL;
+END ambiguous_owner;
+/
+CREATE PROCEDURE app.missing_before_create IS BEGIN COMMIT;
+CREATE PROCEDURE app.after_create IS BEGIN COMMIT; END;
+/
+CREATE PROCEDURE app.no_begin IS END;
+/
+CREATE PROCEDURE app.good_last IS BEGIN ROLLBACK; END good_last;
+/
+END;
+CREATE PROCEDURE app.wrong_case IS BEGIN CASE WHEN 1 = 1 THEN NULL; END; END;
+CREATE PROCEDURE app.missing_at_eof IS BEGIN COMMIT;

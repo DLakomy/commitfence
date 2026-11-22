@@ -1,0 +1,41 @@
+# CommitFence
+
+Your first line of defence against accidental commits in PL/SQL.
+
+In PL/SQL, a function can commit the caller's pending transaction with a single
+`COMMIT` statement. From the call site, it can be hard to tell that the transaction
+has ended (the resulting bugs are really not funny...). CommitFence is a linter that
+runs locally, without a database connection, and can help you avoid such accidents.
+
+What inspired me is the way Scala can track side effects. In Eezo, for example,
+the type system distinguishes a read-only `read` scope from a `transact` scope
+that also allows writes. That gave me an idea: can we track commits
+through PL/SQL calls? Vide [Introducing Eezo](https://rockthejvm.com/articles/introducing-eezo)
+
+[Full documentation of CommitFence](docs/usage.md)
+
+## Install
+
+With Go 1.27.3, clone the repo and install from the checkout.
+
+```sh
+git clone https://github.com/DLakomy/commitfence.git
+cd commitfence
+go install ./cmd/commitfence
+```
+
+With Go's bin directory on your `PATH`, run `commitfence check path/to/src`.
+To build a local binary, use `go build -o bin/commitfence ./cmd/commitfence`
+or `make build`.
+
+Prebuilt binaries can come later. If you'd use them now, please
+[open an issue](https://github.com/DLakomy/commitfence/issues/new).
+
+## Why Go?
+
+I considered writing it in PL/SQL and running it inside Oracle, where it could
+inspect database objects directly. For this proof of concept I chose a static
+linter that can run against a checkout. Go gives it fast startup, easy
+cross-compilation, and a short dependency chain.
+
+[Contributing](CONTRIBUTING.md) · [Design](docs/design.md) · [MIT License](LICENSE)

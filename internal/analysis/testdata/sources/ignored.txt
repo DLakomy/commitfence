@@ -1,0 +1,1 @@
+Explicit file inputs may select this file; directory inputs ignore it.
