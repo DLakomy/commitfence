@@ -17,7 +17,7 @@ import (
 )
 
 type checkConfig struct {
-	Version    int      `json:"version"`
+	Version    *int     `json:"version"`
 	Paths      []string `json:"paths"`
 	Extensions []string `json:"extensions"`
 	PathStyle  string   `json:"path_style"`
@@ -97,8 +97,8 @@ func loadConfig(path string, explicit bool) (checkConfig, *analysis.Diagnostic) 
 	if err := json.Unmarshal(data, &config, json.RejectUnknownMembers(true)); err != nil {
 		return fail(err)
 	}
-	if config.Version != 1 {
-		return fail(errors.New("version must be 1"))
+	if config.Version == nil || *config.Version != 0 {
+		return fail(errors.New("version must be 0"))
 	}
 	// Null must not silently clear defaults or act like an omitted field.
 	var fields map[string]jsontext.Value

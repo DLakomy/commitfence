@@ -62,8 +62,8 @@ func newCheckCommand(stderr io.Writer, code *int) *cobra.Command {
 			return nil
 		},
 	}
-	command.Flags().StringVar(&configFile, "config", ".commitfence.json", "version-1 JSON application config file")
-	command.Flags().StringVar(&overrides.Externals, "externals", "", "version-1 JSON file for external transaction declarations (empty disables declarations)")
+	command.Flags().StringVar(&configFile, "config", ".commitfence.json", "JSON application config file")
+	command.Flags().StringVar(&overrides.Externals, "externals", "", "JSON file for external transaction declarations (empty disables declarations)")
 	command.Flags().StringSliceVar(&overrides.Extensions, "extensions", overrides.Extensions, "file extensions selected in directory scans")
 	command.Flags().StringVar(&overrides.PathStyle, "path-style", "relative", "reported paths: relative or absolute")
 	command.Flags().StringVar(&overrides.Color, "color", "auto", "diagnostic colors: auto, always, or never")

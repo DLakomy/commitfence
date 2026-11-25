@@ -1,12 +1,14 @@
 {
- "version": 1,
- "routines": [
-  {"name":"ext.api.safe_call","transaction":"safe"},
-  {"name":"ext.api.unsafe_call","transaction":"unsafe"},
-  {"name":"ext.\"Mixed\".run","transaction":"safe"},
-  {"name":"app.conflict","transaction":"safe"},
-  {"name":"app.uncertain","transaction":"unsafe"},
-  {"name":"app.isolated","transaction":"unsafe"},
-  {"name":"app.declared","transaction":"safe"}
+ "version": 0,
+ "safe": [
+  "ext.api.safe_call",
+  "ext.\"Mixed\".run",
+  "app.conflict",
+  "app.declared"
+ ],
+ "unsafe": [
+  "ext.api.unsafe_call",
+  "app.uncertain",
+  "app.isolated"
  ]
 }

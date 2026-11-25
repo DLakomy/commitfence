@@ -1,6 +1,7 @@
-{"version":1,"routines":[
- {"name":"app.api.advertised","transaction":"safe"},
- {"name":"app.auto","transaction":"safe"},
- {"name":"app.empty_body","transaction":"unsafe"},
- {"name":"app.unknown_body","transaction":"safe"}
+{"version":0,"safe":[
+ "app.api.advertised",
+ "app.auto",
+ "app.unknown_body"
+],"unsafe":[
+ "app.empty_body"
 ]}

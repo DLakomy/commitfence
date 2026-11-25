@@ -42,7 +42,7 @@ func TestConfigDiscoveryAndDefaultPaths(t *testing.T) {
 	if !strings.Contains(output, "local.sql:") || !strings.Contains(output, "selected/inner.sql:") || strings.Contains(output, "\x1b[") {
 		t.Fatalf("default recursive scan: %s", output)
 	}
-	writeCLIFile(t, ".commitfence.json", `{"version":1,"paths":["selected"]}`)
+	writeCLIFile(t, ".commitfence.json", `{"version":0,"paths":["selected"]}`)
 	output = checkCLI(t, 1)
 	if !strings.Contains(output, "selected/inner.sql:") || strings.Contains(output, "local.sql:") {
 		t.Fatalf("discovered config paths: %s", output)
@@ -51,7 +51,7 @@ func TestConfigDiscoveryAndDefaultPaths(t *testing.T) {
 	// Explicit config replaces discovery. With paths omitted, its directory must
 	// not become the fallback scan root.
 	writeCLIFile(t, ".commitfence.json", "invalid local config")
-	writeCLIFile(t, "config/settings.json", `{"version":1}`)
+	writeCLIFile(t, "config/settings.json", `{"version":0}`)
 	output = checkCLI(t, 1, "--config", "config/settings.json")
 	if !strings.Contains(output, "local.sql:") || !strings.Contains(output, "selected/inner.sql:") {
 		t.Fatalf("explicit config without paths: %s", output)
@@ -64,7 +64,7 @@ func TestConfigAndCLIOverrides(t *testing.T) {
 	writeCLIFile(t, "project/src/custom.unit", committingSource)
 	writeCLIFile(t, "override.txt", committingSource)
 	writeCLIFile(t, "project/settings.json", `{
-  "version":1, "paths":["src"], "extensions":[".UNIT","unit"],
+  "version":0, "paths":["src"], "extensions":[".UNIT","unit"],
   "path_style":"absolute", "color":"always"
 }`)
 	cwd, err := os.Getwd()
@@ -93,7 +93,7 @@ func TestCheckRelativePathsFromSymlinkedWorkingDirectory(t *testing.T) {
 	root := t.TempDir()
 	project := filepath.Join(root, "project")
 	writeCLIFile(t, filepath.Join(project, "src", "source.sql"), committingSource)
-	writeCLIFile(t, filepath.Join(project, ".commitfence.json"), `{"version":1,"paths":["src"]}`)
+	writeCLIFile(t, filepath.Join(project, ".commitfence.json"), `{"version":0,"paths":["src"]}`)
 	alias := filepath.Join(root, "alias")
 	if err := os.Symlink(project, alias); err != nil {
 		t.Fatal(err)
@@ -121,15 +121,15 @@ BEGIN
 END run;
 /
 `)
-	writeCLIFile(t, "project/lookup-behavior.json", `{"version":1,"routines":[{"name":"ext.api.lookup","transaction":"safe"}]}`)
-	writeCLIFile(t, "project/settings.json", `{"version":1,"paths":["source.sql"],"externals":"lookup-behavior.json"}`)
+	writeCLIFile(t, "project/lookup-behavior.json", `{"version":0,"safe":["ext.api.lookup"]}`)
+	writeCLIFile(t, "project/settings.json", `{"version":0,"paths":["source.sql"],"externals":"lookup-behavior.json"}`)
 	if output := checkCLI(t, 0, "--config", "project/settings.json"); output != "" {
 		t.Fatalf("config-relative externals file: %s", output)
 	}
 	if output := checkCLI(t, 1, "--config", "project/settings.json", "--externals="); !strings.Contains(output, "unknown-effect") {
 		t.Fatalf("empty override did not disable declarations: %s", output)
 	}
-	writeCLIFile(t, "override.json", `{"version":1,"routines":[{"name":"ext.api.lookup","transaction":"unsafe"}]}`)
+	writeCLIFile(t, "override.json", `{"version":0,"unsafe":["ext.api.lookup"]}`)
 	output := checkCLI(t, 1, "--config", "project/settings.json", "--externals", "override.json")
 	if !strings.Contains(output, "missing-permission") || !strings.Contains(output, "origin: override.json:") {
 		t.Fatalf("working-directory-relative externals override: %s", output)
@@ -142,18 +142,19 @@ func TestInvalidConfigurationStopsAnalysis(t *testing.T) {
 	for _, tc := range []struct{ name, document string }{
 		{"malformed", "{"},
 		{"missing version", `{}`},
+		{"null version", `{"version":null}`},
 		{"unsupported version", `{"version":2}`},
-		{"unknown setting", `{"version":1,"other":true}`},
-		{"removed warning policy", `{"version":1,"fail_on_warning":false}`},
-		{"wrong type", `{"version":1,"paths":"source.sql"}`},
-		{"empty paths", `{"version":1,"paths":[]}`},
-		{"empty source path", `{"version":1,"paths":[""]}`},
-		{"empty extensions", `{"version":1,"extensions":[]}`},
-		{"invalid extension", `{"version":1,"extensions":["*.sql"]}`},
-		{"path style", `{"version":1,"path_style":"other"}`},
-		{"color", `{"version":1,"color":"other"}`},
-		{"null field", `{"version":1,"paths":null}`},
-		{"duplicate setting", `{"version":1,"color":"auto","color":"never"}`},
+		{"unknown setting", `{"version":0,"other":true}`},
+		{"removed warning policy", `{"version":0,"fail_on_warning":false}`},
+		{"wrong type", `{"version":0,"paths":"source.sql"}`},
+		{"empty paths", `{"version":0,"paths":[]}`},
+		{"empty source path", `{"version":0,"paths":[""]}`},
+		{"empty extensions", `{"version":0,"extensions":[]}`},
+		{"invalid extension", `{"version":0,"extensions":["*.sql"]}`},
+		{"path style", `{"version":0,"path_style":"other"}`},
+		{"color", `{"version":0,"color":"other"}`},
+		{"null field", `{"version":0,"paths":null}`},
+		{"duplicate setting", `{"version":0,"color":"auto","color":"never"}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			writeCLIFile(t, ".commitfence.json", tc.document)

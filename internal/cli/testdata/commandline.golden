@@ -25,9 +25,9 @@ Usage:
 
 Flags:
       --color string         diagnostic colors: auto, always, or never (default "auto")
-      --config string        version-1 JSON application config file (default ".commitfence.json")
+      --config string        JSON application config file (default ".commitfence.json")
       --extensions strings   file extensions selected in directory scans (default [sql,pks,pkb,pls,tps,tpb])
-      --externals string     version-1 JSON file for external transaction declarations (empty disables declarations)
+      --externals string     JSON file for external transaction declarations (empty disables declarations)
   -h, --help                 help for check
       --path-style string    reported paths: relative or absolute (default "relative")
 === commitfence completion

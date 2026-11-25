@@ -1027,14 +1027,14 @@ func TestCheckTransactionDeclarations(t *testing.T) {
 		t.Fatalf("conflicts: %+v", got.Errors)
 	}
 	conflict := got.Errors[0]
-	if conflict.Location.Line != 7 || conflict.Origin.Line != 16 || len(conflict.Evidence) != 1 {
+	if conflict.Location.Line != 6 || conflict.Origin.Line != 16 || len(conflict.Evidence) != 1 {
 		t.Fatalf("conflict evidence: %+v", conflict)
 	}
 	counts := map[string]int{}
 	for _, d := range got.Findings {
 		counts[d.Routine+"|"+d.Callee+"|"+string(d.Kind)]++
 		if d.Routine == "APP.CALLER" && d.Callee == "EXT.API.UNSAFE_CALL" {
-			if d.Origin.Line != 5 || !strings.HasSuffix(d.Origin.File, "valid.json") || len(d.Evidence) != 2 || d.Evidence[1].Description != "external unsafe declaration" {
+			if d.Origin.Line != 10 || !strings.HasSuffix(d.Origin.File, "valid.json") || len(d.Evidence) != 2 || d.Evidence[1].Description != "external unsafe declaration" {
 				t.Fatalf("declaration evidence: %+v", d)
 			}
 		}
@@ -1058,41 +1058,43 @@ func TestCheckTransactionDeclarations(t *testing.T) {
 	}
 }
 
-func TestCheckInvalidExternals(t *testing.T) {
+func TestCheckExternalsValidation(t *testing.T) {
+	const source = "testdata/externals/source.sql"
 	t.Run("entry diagnostics", func(t *testing.T) {
 		const doc = `{
-  "version": 1,
-  "routines": [
+  "unsafe": [
+    "ext.api.unsafe_call",
+    "ext.api.missing_call",
     null,
+    "unsafe"
+  ],
+  "version": 0,
+  "safe": [
     {},
-    {"name":"run","transaction":"safe"},
-    {"name":"a.b","transaction":"maybe"},
-    {"name":"a.b.c.d","transaction":"unsafe"},
-    {"name":"app.run","transaction":"safe"},
-    {"name":"APP.RUN","transaction":"unsafe"}
+    "a.b.c.d",
+    "ext.api.safe_call",
+    "EXT.API.UNSAFE_CALL",
+    "EXT.API.SAFE_CALL",
+    "Ext.Api.unsafe_call"
   ]
 }`
 		path := filepath.Join(t.TempDir(), "externals.json")
-		if err := os.WriteFile(path, []byte(doc), 0600); err != nil {
-			t.Fatal(err)
-		}
-		got := analysis.Check(analysis.Options{Paths: []string{"testdata/externals/source.sql"}, ExternalsPath: path})
+		writeFixture(t, path, doc)
+		got := analysis.Check(analysis.Options{Paths: []string{source}, ExternalsPath: path})
 		want := []struct {
 			line    int
 			message string
 		}{
-			{4, "transaction declaration 1: name must be SCHEMA.ROUTINE or SCHEMA.PACKAGE.ROUTINE"},
-			{5, "transaction declaration 2: name must be SCHEMA.ROUTINE or SCHEMA.PACKAGE.ROUTINE"},
-			{6, "transaction declaration 3: name must be SCHEMA.ROUTINE or SCHEMA.PACKAGE.ROUTINE"},
-			{7, "transaction declaration 4: transaction must be safe or unsafe"},
-			{8, "transaction declaration 5: name must be SCHEMA.ROUTINE or SCHEMA.PACKAGE.ROUTINE"},
-			{10, "transaction declaration 7: duplicate normalized identity APP.RUN"},
+			{5, "unsafe declaration 3: name must be a string"},
+			{6, "unsafe declaration 4: name must be SCHEMA.ROUTINE or SCHEMA.PACKAGE.ROUTINE"},
+			{10, "safe declaration 1: name must be a string"},
+			{11, "safe declaration 2: name must be SCHEMA.ROUTINE or SCHEMA.PACKAGE.ROUTINE"},
+			{13, "safe declaration 4: duplicate normalized identity EXT.API.UNSAFE_CALL"},
+			{14, "safe declaration 5: duplicate normalized identity EXT.API.SAFE_CALL"},
+			{15, "safe declaration 6: duplicate normalized identity EXT.API.UNSAFE_CALL"},
 		}
 		if len(got.Errors) != len(want) {
 			t.Fatalf("errors: %+v", got.Errors)
-		}
-		if len(got.Findings) == 0 {
-			t.Fatal("invalid config stopped independent source analysis")
 		}
 		lines := strings.Split(doc, "\n")
 		for i, expected := range want {
@@ -1106,24 +1108,45 @@ func TestCheckInvalidExternals(t *testing.T) {
 				t.Errorf("entry diagnostic %d: got %+v, want message %q at %+v", i, e, expected.message, loc)
 			}
 		}
+		var calls []string
+		for _, d := range got.Findings {
+			if strings.HasPrefix(d.Callee, "EXT.API.") {
+				calls = append(calls, d.Callee+"|"+string(d.Kind))
+				if d.Callee == "EXT.API.MISSING_CALL" {
+					assertSourceLocation(t, []byte(doc), path, d.Origin, `"ext.api.missing_call"`)
+				}
+			}
+		}
+		if want := []string{
+			"EXT.API.SAFE_CALL|unknown-effect",
+			"EXT.API.UNSAFE_CALL|unknown-effect",
+			"EXT.API.MISSING_CALL|missing-permission",
+		}; !slices.Equal(calls, want) {
+			t.Fatalf("findings for external calls: %v, want %v", calls, want)
+		}
 	})
+	baseline := analysis.Check(analysis.Options{Paths: []string{source}})
 	cases := []struct {
 		name, doc string
 		errors    int
 	}{
 		{"malformed", "{", 1},
-		{"version", `{"version":2,"routines":[]}`, 1},
-		{"missing version", `{"routines":[]}`, 1},
-		{"missing routines", `{"version":1}`, 1},
-		{"quoted distinct", `{"version":1,"routines":[{"name":"app.\"Run\"","transaction":"safe"},{"name":"APP.RUN","transaction":"unsafe"}]}`, 0},
+		{"unsupported version", `{"version":2}`, 1},
+		{"missing version", `{"safe":[]}`, 1},
+		{"null version", `{"version":null}`, 1},
+		{"null list", `{"version":0,"unsafe":["ext.api.safe_call"],"safe":null}`, 1},
+		{"wrong list type", `{"version":0,"safe":["ext.api.safe_call"],"unsafe":"ext.api.unsafe_call"}`, 1},
+		{"unknown field", `{"version":0,"safe":["ext.api.safe_call"],"other":[]}`, 1},
+		{"duplicate field", `{"version":0,"safe":["ext.api.safe_call"],"safe":[]}`, 1},
+		{"version only", `{"version":0}`, 0},
+		{"empty arrays", `{"version":0,"safe":[],"unsafe":[]}`, 0},
+		{"quoted distinct", `{"version":0,"safe":["app.\"Run\""],"unsafe":["APP.RUN"]}`, 0},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "externals.json")
-			if err := os.WriteFile(path, []byte(tc.doc), 0600); err != nil {
-				t.Fatal(err)
-			}
-			got := analysis.Check(analysis.Options{Paths: []string{"testdata/externals/source.sql"}, ExternalsPath: path})
+			writeFixture(t, path, tc.doc)
+			got := analysis.Check(analysis.Options{Paths: []string{source}, ExternalsPath: path})
 			if len(got.Errors) != tc.errors {
 				t.Fatalf("errors: %+v", got.Errors)
 			}
@@ -1132,12 +1155,12 @@ func TestCheckInvalidExternals(t *testing.T) {
 					t.Fatalf("configuration location: %+v", e)
 				}
 			}
-			if len(got.Findings) == 0 {
-				t.Fatal("invalid config stopped independent source analysis")
+			if !reflect.DeepEqual(got.Findings, baseline.Findings) {
+				t.Fatalf("expected source findings without applied declarations: %+v", got.Findings)
 			}
 		})
 	}
-	got := analysis.Check(analysis.Options{Paths: []string{"testdata/externals/source.sql"}, ExternalsPath: "testdata/externals/absent.json"})
+	got := analysis.Check(analysis.Options{Paths: []string{source}, ExternalsPath: "testdata/externals/absent.json"})
 	if len(got.Errors) != 1 || got.Errors[0].Kind != analysis.KindConfiguration {
 		t.Fatalf("missing file: %+v", got.Errors)
 	}
@@ -1162,9 +1185,9 @@ func TestCheckDeclarationBoundaries(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertSourceLocation(t, declarationsText, externalsPath, unknown.Location, "{\"name\":\"app.unknown_body\"")
+	assertSourceLocation(t, declarationsText, externalsPath, unknown.Location, `"app.unknown_body"`)
 	assertSourceLocation(t, sourceText, sourcePath, unknown.Origin, "ext.unknown;")
-	if unknown.Location.Line != 5 || unknown.Origin.Line != 27 || unknown.Evidence[0].Location != unknown.Origin || unknown.Evidence[0].Routine != "APP.UNKNOWN_BODY" || unknown.Evidence[0].Callee != "EXT.UNKNOWN" {
+	if unknown.Location.Line != 4 || unknown.Origin.Line != 27 || unknown.Evidence[0].Location != unknown.Origin || unknown.Evidence[0].Routine != "APP.UNKNOWN_BODY" || unknown.Evidence[0].Callee != "EXT.UNKNOWN" {
 		t.Fatalf("unknown conflict evidence: %+v", unknown)
 	}
 	counts := map[string]int{}
@@ -1210,7 +1233,7 @@ func TestCheckSafeUnknownConflicts(t *testing.T) {
 			source := filepath.Join(dir, "source.sql")
 			externalsPath := filepath.Join(dir, "externals.json")
 			writeFixture(t, source, "CREATE PROCEDURE app.dependency IS BEGIN "+body+" END dependency;\nCREATE PROCEDURE app.wrapper IS BEGIN app.dependency; END wrapper;\n")
-			writeFixture(t, externalsPath, `{"version":1,"routines":[{"name":"app.wrapper","transaction":"safe"}]}`)
+			writeFixture(t, externalsPath, `{"version":0,"safe":["app.wrapper"]}`)
 			got := analysis.Check(analysis.Options{Paths: []string{source}, ExternalsPath: externalsPath})
 			if len(got.Errors) != 1 || got.Errors[0].Kind != analysis.KindDeclarationConflict || got.Errors[0].Severity != analysis.SeverityError || got.Errors[0].Routine != "APP.WRAPPER" || got.Errors[0].Origin.Line != 1 || len(got.Errors[0].Evidence) != 2 {
 				t.Fatalf("unknown conflict: %+v", got)

@@ -27,10 +27,12 @@ applicable, a call chain to the source of the effect.
 
 `commitfence check` reads an optional `.commitfence.json` in the working
 directory. Use `--config FILE` to select another file. Only `version` is required.
+For now, the only possible `version` is `0`. Stability of these file formats is not
+guaranteed for this version.
 
 ```json
 {
-  "version": 1,
+  "version": 0,
   "paths": ["src"],
   "externals": "externals.json",
   "extensions": ["sql", "pks", "pkb", "pls", "tps", "tpb"],
@@ -128,11 +130,9 @@ and pass `--externals externals.json`.
 
 ```json
 {
-  "version": 1,
-  "routines": [
-    {"name": "EXT.CUSTOMER_API.LOOKUP", "transaction": "safe"},
-    {"name": "EXT.BATCH_API.FLUSH", "transaction": "unsafe"}
-  ]
+  "version": 0,
+  "safe": ["EXT.CUSTOMER_API.LOOKUP"],
+  "unsafe": ["EXT.BATCH_API.FLUSH"]
 }
 ```
 
@@ -141,6 +141,7 @@ and pass `--externals externals.json`.
 - `unsafe` grants the external routine permission and declares a potential
   effect. A caller of `EXT.BATCH_API.FLUSH` needs its own permission.
 
+Either array can be omitted when empty. Use `[]` for an explicit empty array.
 Use `SCHEMA.ROUTINE` or `SCHEMA.PACKAGE.ROUTINE`. Each entry covers all
 overloads. Unquoted names are case-insensitive. If source is available,
 CommitFence checks it and reports `declaration-conflict` when an outward effect

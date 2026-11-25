@@ -30,9 +30,9 @@ func TestEndToEndProject(t *testing.T) {
 				"origin: src/customer_service.pkb:6:5",
 				"trace: src/import_api.pkb:4:5: APP.IMPORT_API.RUN_IMPORT -> APP.CUSTOMER_SERVICE.SAVE_CUSTOMER: call",
 				"trace: src/customer_service.pkb:6:5: APP.CUSTOMER_SERVICE.SAVE_CUSTOMER: COMMIT",
-				"origin: externals.json:8:5",
+				"origin: externals.json:7:5",
 				"trace: src/import_api.pkb:5:5: APP.IMPORT_API.RUN_IMPORT -> EXT.CUSTOMER_API.FLUSH_BATCH: call",
-				"trace: externals.json:8:5: EXT.CUSTOMER_API.FLUSH_BATCH: external unsafe declaration",
+				"trace: externals.json:7:5: EXT.CUSTOMER_API.FLUSH_BATCH: external unsafe declaration",
 			},
 		},
 		{

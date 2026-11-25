@@ -70,7 +70,7 @@ CommitFence reads local files without connecting to Oracle or executing SQL.
 
 ## External transaction behavior
 
-Use a version-1 JSON file such as `externals.json` for dependencies whose source
+Use a version-0 JSON file such as `externals.json` for dependencies whose source
 is unavailable or uneditable. Each transaction declaration uses a
 `SCHEMA.ROUTINE` or `SCHEMA.PACKAGE.ROUTINE` name and covers all overloads of
 that identity. Unquoted names are case-insensitive and quoted names retain
@@ -78,15 +78,14 @@ their identity.
 
 ```json
 {
-  "version": 1,
-  "routines": [
-    {"name": "EXT.LOOKUP_API.FIND_CUSTOMER", "transaction": "safe"},
-    {"name": "EXT.BATCH_API.FLUSH", "transaction": "unsafe"}
-  ]
+  "version": 0,
+  "safe": ["EXT.LOOKUP_API.FIND_CUSTOMER"],
+  "unsafe": ["EXT.BATCH_API.FLUSH"]
 }
 ```
 
-`safe` asserts that the routine preserves its caller's transaction. `unsafe`
+Either array can be omitted when empty. Each name can appear only once in the
+file. `safe` asserts that the routine preserves its caller's transaction. `unsafe`
 declares possible effects on that transaction and grants permission in
 CommitFence. If available source contradicts a `safe` declaration, CommitFence
 reports `CF1004 [declaration-conflict]`.
