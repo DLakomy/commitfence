@@ -16,6 +16,15 @@ through PL/SQL calls? Vide [Introducing Eezo](https://rockthejvm.com/articles/in
 
 ## Install
 
+### Prebuilt binaries
+
+Download an archive for your system from [GitHub Releases](https://github.com/DLakomy/commitfence/releases).
+
+Extract the archive and put `commitfence` (or `commitfence.exe` on Windows)
+on your `PATH`.
+
+### Install with Go
+
 Use `go install` to install CommitFence. See [go.mod](go.mod) for the minimum Go
 version and preferred toolchain.
 
@@ -35,9 +44,6 @@ go install ./cmd/commitfence
 
 To build a local binary, use `make build` or
 `go build -o bin/commitfence ./cmd/commitfence` from the checkout.
-
-CommitFence is still a proof of concept. I’ll revisit prebuilt binaries once it’s
-more stable and has had more testing.
 
 ## Why Go?
 

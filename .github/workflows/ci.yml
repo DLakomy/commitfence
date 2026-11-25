@@ -2,6 +2,8 @@ name: CI
 
 on:
   push:
+    branches: ['**']
+    tags: ['v*']
   pull_request:
 
 permissions:
@@ -21,8 +23,70 @@ jobs:
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-          cache: true
+          cache: ${{ !startsWith(github.ref, 'refs/tags/') }}
       - name: Check formatting and static analysis
         run: make lint
       - name: Run tests with the race detector
         run: make test-race
+
+  release:
+    name: Build, attest, and draft release
+    needs: quality
+    if: github.event_name == 'push' && github.ref_type == 'tag' && github.event.created
+    concurrency:
+      group: release-${{ github.ref }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write # Create and upload assets to a release draft.
+      id-token: write # Request the signing identity for build provenance.
+      attestations: write # Store the signed build provenance in GitHub.
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Build release archives
+        env:
+          CGO_ENABLED: '0'
+        run: |
+          output_dir="$RUNNER_TEMP/commitfence-release"
+          mkdir "$output_dir"
+          staging_dir=$(mktemp -d)
+          trap 'rm -rf "$staging_dir"' EXIT
+
+          for target in linux_amd64 linux_arm64 darwin_amd64 darwin_arm64 windows_amd64 windows_arm64; do
+            binary=commitfence
+            if [[ "$target" == windows_* ]]; then
+              binary=commitfence.exe
+            fi
+            GOOS="${target%_*}" GOARCH="${target#*_}" \
+              go build -trimpath -o "$staging_dir/$binary" ./cmd/commitfence
+
+            archive="$output_dir/commitfence_${GITHUB_REF_NAME}_$target"
+            if [[ "$target" == windows_* ]]; then
+              zip -j "$archive.zip" "$staging_dir/$binary" LICENSE
+            else
+              tar -czf "$archive.tar.gz" LICENSE -C "$staging_dir" "$binary"
+            fi
+          done
+      - name: Attest release archives
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: '${{ runner.temp }}/commitfence-release/*'
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            printf 'A draft or release already exists for %s.\n' "$GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP"/commitfence-release/* \
+            --repo "$GITHUB_REPOSITORY" --draft --verify-tag --generate-notes
